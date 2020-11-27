@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import cProfile
 
 from moviepy.audio.fx.audio_normalize import audio_normalize
 from moviepy.audio.io.AudioFileClip import AudioFileClip
@@ -29,7 +30,11 @@ from moviepy.video.fx.time_mirror import time_mirror
 from moviepy.video.fx.time_symmetrize import time_symmetrize
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.VideoClip import ColorClip
+from moviepy.video.fx.scroll import scroll
 from moviepy.video.fx.supersample import supersample
+from moviepy.video.fx.mask_or import mask_or
+from moviepy.video.fx.mask_color import mask_color
+from moviepy.video.fx.mask_and import mask_and
 
 from tests.test_helper import TMP_DIR
 
@@ -216,14 +221,14 @@ def test_loop():
     target3 = BitmapClip([["R"], ["G"], ["B"], ["R"], ["G"]], fps=1)
     assert clip3 == target3
 
-    clip = get_test_video()
-    clip1 = loop(clip).with_duration(3)  # infinite looping
-    clip1.write_videofile(os.path.join(TMP_DIR, "loop1.webm"))
+    # clip = get_test_video()
+    # clip1 = loop(clip).with_duration(3)  # infinite looping
+    # clip1.write_videofile(os.path.join(TMP_DIR, "loop1.webm"))
 
-    return  # Still buggy. TODO fix
+    # return  # Still buggy. TODO fix
     # clip2 = loop(clip, duration=10)  # loop for 10 seconds
     # clip2.write_videofile(os.path.join(TMP_DIR, "loop2.webm"))
-
+    # #
     # clip3 = loop(clip, n=3)  # loop 3 times
     # clip3.write_videofile(os.path.join(TMP_DIR, "loop3.webm"))
     # close_all_clips(objects=locals())
@@ -272,7 +277,21 @@ def test_margin():
 
 
 def test_mask_and():
-    pass
+    color_dict = {
+        "R": (255, 1, 1),
+        "G": (2, 255, 2),
+        "B": (3, 3, 255),
+        "X": (3, 1, 1),
+        "Y": (2, 1, 1),
+        "Z": (2, 3, 2)
+    }
+    clipA = BitmapClip([["R"], ["G"], ["B"]], color_dict=color_dict, fps=1)
+    clipB = BitmapClip([["B"], ["R"], ["G"]], color_dict=color_dict, fps=1)
+
+    clip1 = mask_and(clipA, clipB)
+    target1 = BitmapClip([["X"], ["Y"], ["Z"]], color_dict=color_dict, fps=1)
+
+    assert clip1 == target1
 
 
 def test_mask_color():
@@ -280,7 +299,21 @@ def test_mask_color():
 
 
 def test_mask_or():
-    pass
+    color_dict = {
+        "R": (255, 0, 0),
+        "G": (0, 255, 0),
+        "B": (0, 0, 255),
+        "X": (255, 255, 0),
+        "Y": (0, 255, 255),
+        "Z": (255, 0, 255)
+    }
+    clipA = BitmapClip([["R"], ["G"], ["B"]], color_dict=color_dict, fps=1)
+    clipB = BitmapClip([["B"], ["R"], ["G"]], color_dict=color_dict, fps=1)
+
+    clip1 = mask_or(clipA, clipB)
+    target1 = BitmapClip([["Z"], ["X"], ["Y"]], color_dict=color_dict, fps=1)
+
+    assert clip1 == target1
 
 
 def test_mirror_x():
@@ -358,7 +391,10 @@ def test_rotate_nonstandard_angles():
 
 
 def test_scroll():
-    pass
+    clip = BitmapClip([["A"], ["B"], ["C"], ["D"]], fps=1)
+    clip1 = scroll(clip, w=2, h=1, x_speed=1, x_start=0)
+    target1 = BitmapClip([["A"], ["B"], ["C"], ["D"]], fps=1)
+    assert clip1 == target1
 
 
 def test_speedx():
@@ -412,7 +448,17 @@ def test_speedx():
 
 
 def test_supersample():
-    pass
+    color_dict = {
+        "R": (30, 0, 0),
+        "G": (30, 0, 0),
+        "W": (30, 0, 0),
+    }
+    clip = BitmapClip([["R"], ["G"]], color_dict=color_dict, fps=1)
+
+    clip1 = supersample(clip, d=1, n_frames=1)  # default initial color
+    target1 = BitmapClip([["W"], ["W"]], color_dict=color_dict, fps=1)
+
+    assert clip1 == target1
 
 
 def test_time_mirror():
@@ -457,4 +503,4 @@ def test_normalize():
 
 
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main(__file__)
