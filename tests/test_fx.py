@@ -1,7 +1,12 @@
 import os
 
+
 import pytest
-import cProfile
+
+
+from unittest import TestCase, mock
+from unittest.mock import patch
+
 
 from moviepy.audio.fx.audio_normalize import audio_normalize
 from moviepy.audio.io.AudioFileClip import AudioFileClip
@@ -202,6 +207,17 @@ def test_invert_colors():
         fps=1,
     )
     assert clip1 == target1
+
+
+class MockTests(TestCase):
+    @staticmethod
+    def test_mock_loop():
+        with mock.patch('moviepy.video.fx.loop', return_value=None):
+            clip = BitmapClip([["R"], ["G"], ["B"]], fps=1)
+            clip1 = loop(clip, n=2)
+            target1 = BitmapClip([["R"], ["G"], ["B"], ["R"], ["G"], ["B"]], fps=1)
+
+        assert clip1 == target1
 
 
 def test_loop():
